@@ -1,31 +1,20 @@
-FROM nginx:mainline-alpine-slim
-MAINTAINER ifeng <https://t.me/HiaiFeng>
-EXPOSE 80
-USER root
+FROM alpine
 
-RUN apk update && apk add --no-cache supervisor wget unzip curl
+RUN  sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
+   && apk update \
+   && apk add nodejs-current npm g++ git python3 make \
+   && echo 'https://dl-cdn.alpinelinux.org/alpine/v3.9/main' >> /etc/apk/repositories \
+   && echo 'https://dl-cdn.alpinelinux.org/alpine/v3.9/community' >> /etc/apk/repositories \
+   && sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
+   && apk update \
+   && apk add mongodb yaml-cpp=0.6.2-r2 \
+   && git clone --depth=1 https://hub.fastgit.xyz/Crepe-Inc/CrepeSR.git \
+   && git clone https://hub.fastgit.xyz/memetrollsXD/CrepeSR-Resources.git /CrepeSR/src/data \
+   && cd /CrepeSR \
+   && npm --registry=https://registry.npmmirror.com install \
+   && apk del g++ git python3 make \
+   && rm -r /CrepeSR/src/data/StarRail_Data \
+   && mkdir -v /CrepeSR/db \
+   && echo "cd /CrepeSR && mongod --fork --quiet --dbpath=/CrepeSR/db --syslog && npm run start" > /CrepeSR/run.sh
 
-# 定义 UUID 及 伪装路径,请自行修改.(注意:伪装路径以 / 符号开始,为避免不必要的麻烦,请不要使用特殊符号.)
-ENV UUID de04add9-5c68-8bab-950c-08cd5320df18
-ENV VMESS_WSPATH /vmess
-ENV VLESS_WSPATH /vless
-
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY nginx.conf /etc/nginx/nginx.conf
-
-RUN mkdir /etc/v2ray /usr/local/v2ray
-COPY config.json /etc/v2ray/
-COPY entrypoint.sh /usr/local/v2ray/
-
-# 感谢 fscarmen 大佬提供 Dockerfile 层优化方案
-RUN wget -q -O /tmp/v2ray-linux-64.zip https://github.com/v2fly/v2ray-core/releases/download/v4.45.0/v2ray-linux-64.zip && \
-    unzip -d /usr/local/v2ray /tmp/v2ray-linux-64.zip v2ray  && \
-    wget -q -O /usr/local/v2ray/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat && \
-    wget -q -O /usr/local/v2ray/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat && \
-    chmod a+x /usr/local/v2ray/entrypoint.sh && \
-    apk del wget unzip  && \
-    rm -rf /tmp/v2ray-linux-64.zip && \
-    rm -rf /var/cache/apk/* && \
-    rm -rf /tmp/*
-    
-ENTRYPOINT [ "/usr/local/v2ray/entrypoint.sh" ]
+ENTRYPOINT [ "/bin/sh" , "/CrepeSR/run.sh" ]
