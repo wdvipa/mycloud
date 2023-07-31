@@ -15,14 +15,6 @@ MAINTAINER Nick,Y.Peng <nickyp@dockerstu.com>
 ENV TZ "Asia/Shanghai"
 ENV TERM xterm
 
-# ADD：添加/拷贝文件到container里面，还有一个拷贝命令是COPY
-# 两者的区别如下：
-# 前者比后者多两个功能；
-#     1. 可直接将url对应的文件直接复制到container里面；
-#     2. 如果复制的是tar压缩包文件，用ADD拷贝结束后会自动帮我们解压；
-ADD aliyun-mirror.repo /etc/yum.repos.d/CentOS-Base.repo
-ADD aliyun-epel.repo /etc/yum.repos.d/epel.repo
-
 # RUN 后面是要执行的命令，每执行一条指令就是一层，所以Dockerfile采用的是分层的技术
 RUN yum install -y curl wget tar bzip2 unzip vim-enhanced passwd sudo yum-utils hostname net-tools rsync man && \
     yum install -y gcc gcc-c++ git make automake cmake patch logrotate python-devel libpng-devel libjpeg-devel && \
